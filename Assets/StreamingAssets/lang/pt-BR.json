@@ -985,6 +985,10 @@
             "OpenPersistentDataPath": "Abrir Diretório de Dados Persistentes"
         },
         "Setting": {
+            "FullScanOnStartup": {
+                "Name": "Escanear Tudo ao Iniciar",
+                "Description": "Escaneia as pastas de músicas por completo toda vez que o jogo abre, então músicas novas aparecem sem usar Escanear Músicas. A abertura fica mais lenta com bibliotecas grandes. Desligado, o jogo só lê o cache de músicas ao abrir."
+            },
             "AllowDuplicateSongs": {
                 "Name": "Permitir Músicas Duplicadas",
                 "Description": "Permite que músicas duplicadas sejam escaneadas e mostradas na biblioteca. <color=white>Reescaneamento necessário caso seja mudado!</color>"

@@ -98,6 +98,7 @@ namespace YARG.Settings
             new SongManagerTab("SongManager", icon: "Songs")
             {
                 new HeaderMetadata("ScanningOptions"),
+                nameof(Settings.FullScanOnStartup), // [pessoal]
                 nameof(Settings.AllowDuplicateSongs),
                 nameof(Settings.UseFullDirectoryForPlaylists),
                 nameof(Settings.Genrelizer),

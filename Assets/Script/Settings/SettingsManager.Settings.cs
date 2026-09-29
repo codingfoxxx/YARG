@@ -296,6 +296,8 @@ namespace YARG.Settings
 
             public ToggleSetting AllowDuplicateSongs { get; } = new(true, _ => MusicLibraryMenu.SetReload(MusicLibraryReloadState.Partial));
             public ToggleSetting UseFullDirectoryForPlaylists { get; } = new(false);
+            // [pessoal] Full scan instead of the quick (cache-only) scan at startup, so new song folders show up
+            public ToggleSetting FullScanOnStartup { get; } = new(false);
 
             public ToggleSetting ShowFavoriteButton { get; } = new(true);
 

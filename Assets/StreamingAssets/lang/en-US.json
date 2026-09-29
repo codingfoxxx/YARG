@@ -1143,6 +1143,10 @@
             "OpenAsioControlPanel": "Open ASIO Control Panel"
         },
         "Setting": {
+            "FullScanOnStartup": {
+                "Name": "Full Scan on Startup",
+                "Description": "Scans the song folders completely every time the game starts, so new songs show up without using Scan Songs. Startup gets slower with large libraries. When off, the game only reads the song cache at startup."
+            },
             "AllowDuplicateSongs": {
                 "Name": "Allow Duplicate Songs",
                 "Description": "Allows duplicate songs to be scanned and displayed in the library. <color=white>Rescan required if changed!</color>"

@@ -98,7 +98,8 @@ namespace YARG
             }
 
             // Fast scan (cache read) on startup
-            await SongContainer.RunRefresh(true, context);
+            // [pessoal] ...unless the player asked for a full scan, which also finds new song folders
+            await SongContainer.RunRefresh(!SettingsManager.Settings.FullScanOnStartup.Value, context);
         }
 
         private static async UniTask UpdateSourcesAndGenres(LoadingContext context)
