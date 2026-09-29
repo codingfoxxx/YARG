@@ -1,0 +1,21 @@
+Unofficial, non-commercial personal fork of YARG (Yet Another Rhythm Game).
+
+  Upstream:  https://github.com/YARC-Official/YARG  (branch dev @ 275e9a13, 2026-09-26)
+  YARG.Core: https://github.com/YARC-Official/YARG.Core  (@ e2d44e8d, unmodified)
+  Fork:      https://github.com/codingfoxxx/YARG  (branch "pessoal")
+
+Modified by Lucas Raposo, starting 2026-09-29. Every change is listed with its
+date and reason in CHANGELOG-FORK.md; edit points in upstream files are marked
+with the comment "[pessoal]".
+
+This fork is not affiliated with, endorsed by or supported by YARC. "YARG" and
+its logos belong to their owners and are used here only to identify the
+upstream project this fork is based on.
+
+License: the YARG code is licensed under the GNU Lesser General Public License
+v3.0 (see LICENSE), which incorporates the GNU General Public License v3.0
+(see COPYING). Third-party components keep their own licenses; see the
+"External Licenses" table in README.md. Notably, the BASS audio library is
+free for non-commercial use only and some sound effects are CC BY-NC 4.0, so
+this fork and any build of it may be used and shared for non-commercial
+purposes only.

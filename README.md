@@ -1,3 +1,7 @@
+> [!NOTE]
+> **Fork pessoal e não oficial** do YARG, focado em guitarra de 5 trastes com controle de Xbox. Não é afiliado à YARC. Veja [FORK.md](FORK.md), [CHANGELOG-FORK.md](CHANGELOG-FORK.md) e [BUILD.md](BUILD.md).
+> *Unofficial personal fork of YARG; not affiliated with YARC. See [FORK.md](FORK.md).*
+
 <p align="center">
   <picture>
     <img alt="YARG Gameplay" src="./Images/Banner.png" width="100%">
