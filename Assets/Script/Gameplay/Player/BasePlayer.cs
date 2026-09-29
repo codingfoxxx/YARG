@@ -273,7 +273,9 @@ namespace YARG.Gameplay.Player
 
             // Apply input offset
             // Video offset is already accounted for
-            time += InputCalibration;
+            // [pessoal] Scaled by song speed like the audio/video calibrations (SongRunner): a real-time
+            // controller delay is delay * speed in song time. Upstream added it unscaled (wrong away from 1x).
+            time += InputCalibration * GameManager.SongSpeed;
 
             if (Player.IsReplay && GameManager.ReplayInfo != null)
             {
@@ -392,7 +394,7 @@ namespace YARG.Gameplay.Player
 
             double adjustedTime = GameManager.GetInputTime(input.Time);
             // Apply input offset
-            adjustedTime += InputCalibration;
+            adjustedTime += InputCalibration * GameManager.SongSpeed; // [pessoal] see UpdateInputs
             input = new(adjustedTime, input.Action, input.Integer);
 
             // Allow the input to be explicitly ignored before processing it
