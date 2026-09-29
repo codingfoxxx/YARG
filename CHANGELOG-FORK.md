@@ -26,5 +26,15 @@ Mudanças de gameplay sempre ficam atrás de uma configuração; o padrão é o 
 - **Correção de bug:** `GameManager.Update` e a busca da biblioteca de músicas usavam `Keyboard.current` sem checar nulo. Quando o Input System não tem nenhum teclado registrado (raro no Windows, mas possível em PC só com controle), `Keyboard.current` é nulo e a exceção a cada frame interrompia o resto do `Update` da partida, antes de o `SongRunner` avançar o relógio da música. Agora a checagem de Esc/Ctrl+Tab só acontece se houver teclado.
 - Arquivos: `Assets/Script/Gameplay/GameManager.cs`, `Assets/Script/Menu/MusicLibrary/SongSearchingField.cs`.
 
+#### Calibração guiada (Configurações → Abrir calibrador)
+- **Instruções claras** (pt-BR e inglês) antes de começar: o que fazer, qual botão usar no controle (a palhetada, direcional para baixo, ou o A), usar o mesmo fone/caixa de sempre e seguir o som, não a tela. Upstream: duas linhas fixas em inglês.
+- **Duas passadas** da música de calibração (30 s, ~40 toques; upstream: 15 s, ~20 toques). Com erro humano de 15 ms, 95% dos resultados ficam a menos de 5,7 ms do atraso real, contra 8,4 ms com uma passada (400 jogadores simulados em `CalibrationMathTests`).
+- **Descarte de toques por toque**: cada toque é medido contra a batida mais próxima e só os fora da curva (mais de max(50 ms, 3 desvios robustos) da mediana) saem. O filtro do upstream comparava cada toque com o anterior, então uma batida perdida também descartava o toque bom seguinte.
+- **Resultado explicado**: atraso medido, consistência (±ms: boa/razoável/baixa), toques usados/descartados e os valores atuais. Contador de toques durante a medição.
+- **O jogador escolhe onde salvar**: *Salvar no perfil* (calibração de entrada do perfil que tocou, a que já existia no YARG sem ferramenta: guarda a diferença em relação à calibração de áudio atual, então a compensação total fica igual) ou *Salvar para todos* (calibração de áudio global, exatamente o que o calibrador do upstream fazia). *Repetir* e *Voltar* também disponíveis; os botões só aparecem 1 s depois do fim da música, para um toque atrasado não escolher uma opção sem querer. Upstream: gravava a calibração global direto.
+- Correção: voltar e recomeçar não inscreve mais o handler de input duas vezes (cada toque contaria em dobro).
+- Textos longos usam fonte menor (a caixa de texto da cena é de uma linha, 64 pt, sem ajuste automático).
+- Arquivos: `Assets/Script/Menu/Calibrator/Calibrator.cs`, `CalibrationMath.cs` (novo, sem dependência do Unity), `Assets/StreamingAssets/lang/en-US.json` e `pt-BR.json` (chaves novas em `Menu.Calibrator`; os outros idiomas caem no inglês).
+
 #### Verificação
-- Compilação: todo o código do jogo compilado com o Roslyn do Unity (`yarg-autochart/tools/unity-compile-check`), 0 erros. Ainda **sem** teste no jogo rodando (depende do Unity 6000.3.5f2 instalado e do Smart App Control; ver `PROGRESS.md` no repositório de ferramentas).
+- Compilação: todo o código do jogo compilado com o Roslyn do Unity (`yarg-autochart/tools/unity-compile-check`), 0 erros e os mesmos 26 avisos do upstream. Ainda **sem** teste no jogo rodando (depende do Unity 6000.3.5f2 instalado e do Smart App Control; ver `PROGRESS.md` no repositório de ferramentas).
