@@ -295,14 +295,18 @@ namespace YARG.Gameplay
         {
 
 
+            // [pessoal] Keyboard.current is null when no keyboard is present (e.g. playing with only a gamepad);
+            // upstream threw here every frame, skipping the rest of the update
+            var keyboard = Keyboard.current;
+
             // Pause/unpause
-            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
                 TogglePause();
             }
 
             // Toggle debug text
-            if (Keyboard.current.ctrlKey.isPressed && Keyboard.current.tabKey.wasPressedThisFrame)
+            if (keyboard != null && keyboard.ctrlKey.isPressed && keyboard.tabKey.wasPressedThisFrame)
             {
                 ToggleDebugEnabled();
             }

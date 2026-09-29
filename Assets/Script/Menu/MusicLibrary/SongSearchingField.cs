@@ -148,7 +148,9 @@ namespace YARG.Menu.MusicLibrary
 
         private void Update()
         {
-            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            // [pessoal] Keyboard.current is null when no keyboard is present
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
                 ClearFilterQueries();
             }
