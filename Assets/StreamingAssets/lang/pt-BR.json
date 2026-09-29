@@ -122,7 +122,23 @@
     "Menu": {
         "Calibrator": {
             "Detected": "Detectado",
-            "NotEnoughData": "Não há dados suficientes para obter um resultado preciso. Pressione \"voltar\" para sair."
+            "NotEnoughData": "Não há dados suficientes para obter um resultado preciso. Pressione \"voltar\" para sair.",
+            "StartButton": "Calibrar latência",
+            "Instructions": "<b>Calibração de latência</b>\n\nVocê vai ouvir uma batida constante por 30 segundos.\nAperte um botão <b>exatamente quando ouvir cada batida</b>. No controle, use o botão com que você palheta (direcional para baixo) ou o A.\n\n- Use o mesmo fone ou caixa de som com que você joga.\n- Siga o som, não a tela.\n- Se perder uma batida, só continue.\n\nAperte qualquer botão para começar.",
+            "Tap": "Toque {0}",
+            "Result": "<b>Resultado: {0} ms</b>\nÉ o quanto seus toques chegam depois da batida que você ouve (atraso do som + atraso do controle).\nConsistência: ±{1} ms ({2}). {3} toques usados, {4} descartados.",
+            "Current": "Agora: calibração de áudio global {0} ms; calibração de entrada do perfil <b>{1}</b> {2} ms.",
+            "Choose": "<b>Onde salvar?</b>\n- Salvar no perfil: calibração de entrada de <b>{0}</b> = {1} ms. Muda só este perfil; bom quando cada perfil tem o seu controle.\n- Salvar para todos: calibração de áudio = {2} ms (o que o calibrador original fazia).",
+            "SaveProfile": "Salvar no perfil",
+            "SaveGlobal": "Salvar para todos",
+            "Repeat": "Repetir",
+            "SavedProfile": "Salvo! Calibração de entrada de {0}: {1} ms.\nAperte voltar para sair.",
+            "SavedGlobal": "Salvo! Calibração de áudio: {0} ms.\nAperte voltar para sair.",
+            "Consistency": {
+                "Good": "boa",
+                "Fair": "razoável",
+                "Poor": "baixa, repita para um resultado melhor"
+            }
         },
         "Common": {
             "Apply": "Aplicar",

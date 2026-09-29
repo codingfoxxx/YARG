@@ -28,8 +28,22 @@ namespace YARG.Menu.Calibrator
             Starting,
             AudioWaiting,
             Audio,
-            AudioDone
+            AudioDone,
+            Saved, // [pessoal]
         }
+
+        // [pessoal] Guided calibration: the result can be saved to the profile that tapped or globally
+        private const float RESULT_INPUT_DELAY = 1f;
+        // [pessoal] The calibration music (15 s, 20 beats) plays twice: ~40 taps instead of ~20 cut the
+        // statistical error of the result by ~30% (see CalibrationMathTests in yarg-autochart)
+        private const int PASSES = 2;
+        private int _pass;
+        private int _resultAudioCalibration;
+        private long _resultInputCalibration;
+        // [pessoal] The info text is sized for one line (64 pt, no auto-size); longer texts use a smaller size
+        private const float LONG_TEXT_SCALE = 0.55f;
+        private const float MEDIUM_TEXT_SCALE = 0.7f;
+        private float _baseFontSize;
 
         [SerializeField]
         private GameObject _startingStateContainer;
@@ -53,7 +67,23 @@ namespace YARG.Menu.Calibrator
 
         private void Start()
         {
+            // [pessoal] The start button text is fixed in the scene ("Calibrate Audio"); localize it here
+            var buttonText = _startingStateContainer.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (buttonText != null)
+            {
+                buttonText.text = Localize.Key("Menu.Calibrator.StartButton");
+            }
+
+            _baseFontSize = _audioCalibrateText.fontSize; // [pessoal]
             UpdateForState();
+        }
+
+        // [pessoal]
+        private void SetInfoText(string text, Color color, float scale)
+        {
+            _audioCalibrateText.fontSize = _baseFontSize * scale;
+            _audioCalibrateText.color = color;
+            _audioCalibrateText.text = text;
         }
 
         private void OnDestroy()
@@ -85,11 +115,12 @@ namespace YARG.Menu.Calibrator
                     UpdateForState();
                     break;
                 case State.Audio:
-                    _audioCalibrateText.color = Color.green;
-                    _audioCalibrateText.text = Localize.Key("Menu.Calibrator.Detected");
-
                     double inputAge = InputManager.CurrentInputTime - input.Time;
                     _calibrationTimes.Add(_mixer.GetPosition() - inputAge);
+
+                    // [pessoal] Show how many taps were registered (upstream: "Detected")
+                    _audioCalibrateText.color = Color.green;
+                    _audioCalibrateText.text = Localize.KeyFormat("Menu.Calibrator.Tap", _calibrationTimes.Count);
                     break;
             }
         }
@@ -127,10 +158,8 @@ namespace YARG.Menu.Calibrator
                     _audioCalibrateContainer.SetActive(true);
                     _player = null;
 
-                    _audioCalibrateText.color = Color.white;
-                    _audioCalibrateText.text =
-                        "Press any button on each tick you hear.\n" +
-                        "Press any button when you are ready.";
+                    // [pessoal] Full instructions (upstream: two hardcoded English lines)
+                    SetInfoText(Localize.Key("Menu.Calibrator.Instructions"), Color.white, LONG_TEXT_SCALE);
                     SetEmptyNavigation();
                     StartCoroutine(EnableInputAfterDelay());
                     break;
@@ -138,27 +167,92 @@ namespace YARG.Menu.Calibrator
                     _audioCalibrateContainer.SetActive(true);
                     _calibrationTimes.Clear();
 
-                    const float SPEED = 1f;
-                    const double VOLUME = 1.0;
-                    var file = Path.Combine(Application.streamingAssetsPath, "calibration_music.ogg");
-
-                    _mixer = GlobalAudioHandler.LoadCustomFile(file, SPEED, VOLUME);
-                    _mixer.SongEnd += OnAudioEnd;
-                    _mixer.Play();
+                    _pass = 1; // [pessoal]
+                    _audioCalibrateText.fontSize = _baseFontSize; // [pessoal] count-in and taps at full size
+                    StartCalibrationMusic();
                     StartCoroutine(AudioCalibrateCoroutine());
                     break;
                 case State.AudioDone:
                     _audioCalibrateContainer.SetActive(true);
-                    CalculateAudioLatency();
-                    SetBackNavigation();
                     InputManager.MenuInput -= OnMenuInput;
+                    // [pessoal] Result with save options; navigation is enabled after a short delay so
+                    // a tap still in flight when the music ends doesn't pick an option
+                    bool canSave = CalculateAudioLatency();
+                    SetEmptyNavigation();
+                    StartCoroutine(EnableResultNavigationAfterDelay(canSave));
+                    break;
+                case State.Saved: // [pessoal]
+                    _audioCalibrateContainer.SetActive(true);
+                    SetBackNavigation();
                     break;
             }
+        }
+
+        // [pessoal]
+        private IEnumerator EnableResultNavigationAfterDelay(bool canSave)
+        {
+            yield return new WaitForSeconds(RESULT_INPUT_DELAY);
+
+            var entries = new List<NavigationScheme.Entry>();
+            if (canSave)
+            {
+                if (_player != null)
+                {
+                    entries.Add(new NavigationScheme.Entry(MenuAction.Green, "Menu.Calibrator.SaveProfile",
+                        () => SaveToProfile()));
+                }
+
+                entries.Add(new NavigationScheme.Entry(MenuAction.Yellow, "Menu.Calibrator.SaveGlobal",
+                    () => SaveGlobal()));
+            }
+
+            entries.Add(new NavigationScheme.Entry(MenuAction.Blue, "Menu.Calibrator.Repeat", () => StartAudioMode()));
+            entries.Add(new NavigationScheme.Entry(MenuAction.Red, "Menu.Common.Back", () => BackButton()));
+            SetNavigation(new NavigationScheme(entries, true));
+        }
+
+        // [pessoal]
+        private void SaveToProfile()
+        {
+            var profile = _player.Profile;
+            profile.InputCalibrationMilliseconds = _resultInputCalibration;
+            PlayerContainer.SaveProfiles(false);
+
+            SetInfoText(Localize.KeyFormat("Menu.Calibrator.SavedProfile", profile.Name, _resultInputCalibration),
+                Color.green, MEDIUM_TEXT_SCALE);
+            _state = State.Saved;
+            UpdateForState();
+        }
+
+        // [pessoal] Same as the upstream calibrator
+        private void SaveGlobal()
+        {
+            SettingsManager.Settings.AudioCalibration.Value = _resultAudioCalibration;
+            SettingsManager.SaveSettings();
+
+            SetInfoText(Localize.KeyFormat("Menu.Calibrator.SavedGlobal", _resultAudioCalibration),
+                Color.green, MEDIUM_TEXT_SCALE);
+            _state = State.Saved;
+            UpdateForState();
+        }
+
+        // [pessoal] Moved out of UpdateForState so the music can be restarted for the second pass
+        private void StartCalibrationMusic()
+        {
+            const float SPEED = 1f;
+            const double VOLUME = 1.0;
+            var file = Path.Combine(Application.streamingAssetsPath, "calibration_music.ogg");
+
+            _mixer = GlobalAudioHandler.LoadCustomFile(file, SPEED, VOLUME);
+            _mixer.SongEnd += OnAudioEnd;
+            _mixer.Play();
         }
 
         private IEnumerator EnableInputAfterDelay()
         {
             yield return new WaitForSeconds(0.5f);
+            // [pessoal] Never subscribe twice (going back and starting again would count every tap twice)
+            InputManager.MenuInput -= OnMenuInput;
             InputManager.MenuInput += OnMenuInput;
         }
 
@@ -202,49 +296,40 @@ namespace YARG.Menu.Calibrator
             _hasNavigationScheme = false;
         }
 
-        private void CalculateAudioLatency()
+        // [pessoal] Upstream dropped each tap that wasn't one beat after the previous one (a missed beat also
+        // dropped the next good tap) and set the global audio calibration right away. Now the outliers are
+        // discarded individually (CalibrationMath), the result is explained and the player chooses where to save.
+        private bool CalculateAudioLatency()
         {
-            // Drop all discrepancies
-            for (int i = _calibrationTimes.Count - 1; i > 1; i--)
+            if (!CalibrationMath.TryCalculate(_calibrationTimes, SECONDS_PER_BEAT, out var result))
             {
-                if (Math.Abs(_calibrationTimes[i] - (_calibrationTimes[i - 1] + SECONDS_PER_BEAT)) > DROP_THRESH)
-                {
-                    _calibrationTimes.RemoveAt(i);
-                }
+                SetInfoText(Localize.Key("Menu.Calibrator.NotEnoughData"), Color.red, MEDIUM_TEXT_SCALE);
+                return false;
             }
 
-            // If there isn't enough data, RIP
-            if (_calibrationTimes.Count <= 8)
-            {
-                _audioCalibrateText.color = Color.red;
-                _audioCalibrateText.text = Localize.Key("Menu.Calibrator.NotEnoughData");
-                return;
-            }
-
-            // Get each input's signed deviation from the nearest beat.
-            var diffs = new List<double>();
-            for (int i = 0; i < _calibrationTimes.Count; i++)
-            {
-                double nearestBeat = Math.Round(_calibrationTimes[i] / SECONDS_PER_BEAT) * SECONDS_PER_BEAT;
-                diffs.Add(_calibrationTimes[i] - nearestBeat);
-            }
-
-            // Get the median
-            diffs.Sort();
-            int mid = diffs.Count / 2;
-            double median = diffs.Count % 2 != 0 ? diffs[mid] : (diffs[mid] + diffs[mid - 1]) / 2f;
-
-            // Set calibration
-            int calibration = (int)Math.Round(median * 1000);
+            // Same global value the upstream calibrator sets
+            int delay = (int) Math.Round(result.Delay * 1000);
+            int calibration = delay;
             if (SettingsManager.Settings.AccountForHardwareLatency.Value)
                 calibration -= GlobalAudioHandler.PlaybackLatency;
-            SettingsManager.Settings.AudioCalibration.Value = calibration;
 
-            // Set text
-            _audioCalibrateText.color = Color.green;
-            _audioCalibrateText.text =
-                $"Calibration set to {calibration}ms!\n" +
-                "Press back to exit.";
+            // Profile alternative: keep the audio calibration and move the difference to the player's input
+            int currentAudio = SettingsManager.Settings.AudioCalibration.Value;
+            _resultAudioCalibration = calibration;
+            _resultInputCalibration = CalibrationMath.ProfileInputCalibration(calibration, currentAudio);
+
+            string consistency = Localize.Key("Menu.Calibrator.Consistency", result.Consistency.ToString());
+            string profileName = _player?.Profile.Name ?? "-";
+            long currentInput = _player?.Profile.InputCalibrationMilliseconds ?? 0;
+
+            SetInfoText(
+                Localize.KeyFormat("Menu.Calibrator.Result", delay, (int) Math.Round(result.Spread * 1000),
+                    consistency, result.Used, result.Discarded) + "\n\n" +
+                Localize.KeyFormat("Menu.Calibrator.Current", currentAudio, profileName, currentInput) + "\n\n" +
+                Localize.KeyFormat("Menu.Calibrator.Choose", profileName, _resultInputCalibration, calibration),
+                result.Consistency == CalibrationMath.Consistency.Poor ? Color.yellow : Color.white,
+                LONG_TEXT_SCALE);
+            return true;
         }
 
         private IEnumerator AudioCalibrateCoroutine()
@@ -286,6 +371,16 @@ namespace YARG.Menu.Calibrator
 
         private void OnAudioEnd()
         {
+            // [pessoal] Second pass (SongEnd is queued to the main thread by the audio backend).
+            // Beats are measured from the start of the file, so the restart keeps the same grid.
+            if (_state == State.Audio && _pass < PASSES)
+            {
+                _pass++;
+                _mixer?.Dispose();
+                StartCalibrationMusic();
+                return;
+            }
+
             _state = State.AudioDone;
             UpdateForState();
         }

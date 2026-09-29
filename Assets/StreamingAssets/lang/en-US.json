@@ -125,7 +125,23 @@
     "Menu": {
         "Calibrator": {
             "Detected": "Detected",
-            "NotEnoughData": "There isn't enough data to get an accurate result.\nPress back to exit."
+            "NotEnoughData": "There isn't enough data to get an accurate result.\nPress back to exit.",
+            "StartButton": "Calibrate latency",
+            "Instructions": "<b>Latency calibration</b>\n\nYou will hear a steady click for 30 seconds.\nPress a button <b>exactly when you hear each click</b>. On a gamepad, use the button you strum with (D-pad down) or A.\n\n- Use the same headphones or speakers you play with.\n- Follow the sound, not the screen.\n- If you miss a click, just keep going.\n\nPress any button to start.",
+            "Tap": "Tap {0}",
+            "Result": "<b>Result: {0} ms</b>\nYour presses land this late after the click you hear (sound delay + controller delay).\nConsistency: ±{1} ms ({2}). {3} presses used, {4} discarded.",
+            "Current": "Now: global audio calibration {0} ms; input calibration of profile <b>{1}</b> {2} ms.",
+            "Choose": "<b>Where to save?</b>\n- Save to profile: input calibration of <b>{0}</b> = {1} ms. Changes only this profile; good when each profile has its own controller.\n- Save for everyone: audio calibration = {2} ms (what the original calibrator did).",
+            "SaveProfile": "Save to profile",
+            "SaveGlobal": "Save for everyone",
+            "Repeat": "Repeat",
+            "SavedProfile": "Saved! Input calibration of {0}: {1} ms.\nPress back to exit.",
+            "SavedGlobal": "Saved! Audio calibration: {0} ms.\nPress back to exit.",
+            "Consistency": {
+                "Good": "good",
+                "Fair": "fair",
+                "Poor": "poor, repeat for a better result"
+            }
         },
         "Common": {
             "Apply": "Apply",
