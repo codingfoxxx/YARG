@@ -25,6 +25,8 @@ namespace YARG.Input
         private const bool INVERT_DEFAULT = false;
         private const DebounceMode DEBOUNCE_MODE_DEFAULT = DebounceMode.Press;
         private const long DEBOUNCE_THRESHOLD_DEFAULT = 5;
+        // [pessoal] 1 = no hysteresis, same as upstream
+        private const float RELEASE_THRESHOLD_DEFAULT = AnalogButtonHysteresis.NO_HYSTERESIS;
 
         private DebounceTimer<float> _debounceTimer = new()
         {
@@ -33,6 +35,11 @@ namespace YARG.Input
 
         private float _invertSign = INVERT_DEFAULT ? -1 : 1;
         private float _pressPoint;
+
+        // [pessoal] Pressed state is kept instead of recalculated, since with hysteresis it depends on history
+        private float _releaseThreshold = RELEASE_THRESHOLD_DEFAULT;
+        private bool _isPressed;
+        private bool _wasPreviouslyPressed;
 
         public bool Inverted
         {
@@ -47,6 +54,7 @@ namespace YARG.Input
                 if (inverted != Inverted)
                 {
                     State = CalculateState(Control.value);
+                    UpdatePressed(); // [pessoal]
                     InvokeStateChanged(State);
                 }
             }
@@ -59,11 +67,34 @@ namespace YARG.Input
             {
                 bool pressed = IsPressed;
                 _pressPoint = value;
+                UpdatePressed(); // [pessoal]
 
                 // (see above)
                 if (pressed != IsPressed)
                 {
                     State = CalculateState(Control.value);
+                    UpdatePressed(); // [pessoal]
+                    InvokeStateChanged(State);
+                }
+            }
+        }
+
+        /// <summary>
+        /// [pessoal] Fraction of the press point below which a pressed control is released (0-1).
+        /// Values below 1 add hysteresis, so analog controls held near the press point don't chatter.
+        /// </summary>
+        public float ReleaseThreshold
+        {
+            get => _releaseThreshold;
+            set
+            {
+                bool pressed = IsPressed;
+                _releaseThreshold = AnalogButtonHysteresis.SanitizeReleaseThreshold(value);
+                UpdatePressed();
+
+                // (see above)
+                if (pressed != IsPressed)
+                {
                     InvokeStateChanged(State);
                 }
             }
@@ -82,8 +113,11 @@ namespace YARG.Input
 
         public float PreviousState { get; private set; }
 
-        public bool IsPressed => State >= PressPoint;
-        public bool WasPreviouslyPressed => PreviousState >= PressPoint;
+        // [pessoal] Without hysteresis these are exactly the upstream expressions
+        public bool IsPressed => HasHysteresis ? _isPressed : State >= PressPoint;
+        public bool WasPreviouslyPressed => HasHysteresis ? _wasPreviouslyPressed : PreviousState >= PressPoint;
+
+        private bool HasHysteresis => _releaseThreshold < AnalogButtonHysteresis.NO_HYSTERESIS;
 
         public SingleButtonBinding(InputControl<float> control) : base(control)
         {
@@ -93,6 +127,7 @@ namespace YARG.Input
             : base(control)
         {
             PressPoint = control.GetPressPoint(settings);
+            ReleaseThreshold = settings.ButtonReleaseThreshold; // [pessoal]
         }
 
         public SingleButtonBinding(InputControl<float> control, SerializedInputControl serialized)
@@ -121,6 +156,13 @@ namespace YARG.Input
                 debounceThreshold = DEBOUNCE_THRESHOLD_DEFAULT;
 
             DebounceThreshold = debounceThreshold;
+
+            // [pessoal] Written by this fork only, always in invariant format
+            if (!serialized.Parameters.TryGetValue(nameof(ReleaseThreshold), out string releaseText) ||
+                !AnalogButtonHysteresis.TryParse(releaseText, out float releaseThreshold))
+                releaseThreshold = RELEASE_THRESHOLD_DEFAULT;
+
+            ReleaseThreshold = releaseThreshold;
         }
 
         public override SerializedInputControl Serialize()
@@ -137,6 +179,9 @@ namespace YARG.Input
                 serialized.Parameters.Add(nameof(DebounceMode), DebounceMode.ToString());
             if (DebounceThreshold != DEBOUNCE_THRESHOLD_DEFAULT)
                 serialized.Parameters.Add(nameof(DebounceThreshold), DebounceThreshold.ToString());
+            // [pessoal]
+            if (Math.Abs(ReleaseThreshold - RELEASE_THRESHOLD_DEFAULT) >= 0.001)
+                serialized.Parameters.Add(nameof(ReleaseThreshold), AnalogButtonHysteresis.Format(ReleaseThreshold));
 
             return serialized;
         }
@@ -144,6 +189,7 @@ namespace YARG.Input
         public override void UpdateState(double time)
         {
             PreviousState = State;
+            _wasPreviouslyPressed = _isPressed; // [pessoal]
 
             // Read new state
             _debounceTimer.UpdateValue(CalculateState(Control.value));
@@ -153,6 +199,7 @@ namespace YARG.Input
                 return;
 
             State = _debounceTimer.Stop();
+            UpdatePressed(); // [pessoal]
 
             if (DebounceMode == DebounceMode.PressAndRelease ||
                 (IsPressed && DebounceMode == DebounceMode.Press) ||
@@ -168,6 +215,9 @@ namespace YARG.Input
         {
             PreviousState = default;
             State = default;
+            // [pessoal] Same result as the upstream calculation on the default state
+            _wasPreviouslyPressed = AnalogButtonHysteresis.IsPressed(false, PreviousState, PressPoint, ReleaseThreshold);
+            _isPressed = AnalogButtonHysteresis.IsPressed(false, State, PressPoint, ReleaseThreshold);
             _debounceTimer.Stop();
             InvokeStateChanged(State);
         }
@@ -177,12 +227,19 @@ namespace YARG.Input
             return rawValue * _invertSign;
         }
 
+        // [pessoal]
+        private void UpdatePressed()
+        {
+            _isPressed = AnalogButtonHysteresis.IsPressed(_isPressed, State, PressPoint, ReleaseThreshold);
+        }
+
         public void UpdateDebounce(double time)
         {
             if (!_debounceTimer.IsRunning || !_debounceTimer.HasElapsed(time))
                 return;
 
             State = _debounceTimer.Stop();
+            UpdatePressed(); // [pessoal]
             InvokeStateChanged(State);
             return;
         }

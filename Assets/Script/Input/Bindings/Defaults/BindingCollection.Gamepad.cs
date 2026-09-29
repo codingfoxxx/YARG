@@ -73,15 +73,22 @@ namespace YARG.Input
             };
         }
 
+        // [pessoal] Analog triggers used as frets release at 75% of the press point (the Input System's own
+        // default), so a trigger held around the press point doesn't flicker between pressed and released
+        private static readonly ActuationSettings _gamepadTriggerFretSettings = new()
+        {
+            ButtonReleaseThreshold = AnalogButtonHysteresis.INPUT_SYSTEM_DEFAULT,
+        };
+
         private bool SetDefaultFiveFretBindings_Gamepad(Gamepad gamepad)
         {
             if (Mode != GameMode.FiveFretGuitar)
                 return false;
 
-            AddBinding(GuitarAction.GreenFret, gamepad.leftTrigger);
+            AddBinding(GuitarAction.GreenFret, gamepad.leftTrigger, _gamepadTriggerFretSettings); // [pessoal]
             AddBinding(GuitarAction.RedFret, gamepad.leftShoulder);
             AddBinding(GuitarAction.YellowFret, gamepad.rightShoulder);
-            AddBinding(GuitarAction.BlueFret, gamepad.rightTrigger);
+            AddBinding(GuitarAction.BlueFret, gamepad.rightTrigger, _gamepadTriggerFretSettings); // [pessoal]
             AddBinding(GuitarAction.OrangeFret, gamepad.buttonSouth);
 
             AddBinding(GuitarAction.StrumUp, gamepad.dpad.up);

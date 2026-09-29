@@ -18,6 +18,9 @@ namespace YARG.Input
         public float ButtonPressThreshold  = 0.5f;
         public float AxisDeltaThreshold    = 0.05f;
         public int   IntegerDeltaThreshold = 1;
+
+        // [pessoal] Fraction of the press point where analog buttons release (1 = no hysteresis)
+        public float ButtonReleaseThreshold = AnalogButtonHysteresis.NO_HYSTERESIS;
     }
 
     /// <summary>
