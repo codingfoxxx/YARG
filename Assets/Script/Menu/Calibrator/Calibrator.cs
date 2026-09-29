@@ -37,6 +37,7 @@ namespace YARG.Menu.Calibrator
         // [pessoal] The calibration music (15 s, 20 beats) plays twice: ~40 taps instead of ~20 cut the
         // statistical error of the result by ~30% (see CalibrationMathTests in yarg-autochart)
         private const int PASSES = 2;
+        private const double PASS_START_IGNORE = 0.3;
         private int _pass;
         private int _resultAudioCalibration;
         private long _resultInputCalibration;
@@ -116,7 +117,14 @@ namespace YARG.Menu.Calibrator
                     break;
                 case State.Audio:
                     double inputAge = InputManager.CurrentInputTime - input.Time;
-                    _calibrationTimes.Add(_mixer.GetPosition() - inputAge);
+                    double position = _mixer.GetPosition() - inputAge;
+
+                    // [pessoal] The second pass starts after a small reload gap, so a tap anticipating its
+                    // first click would be measured early; skip the start of the pass
+                    if (_pass > 1 && position < PASS_START_IGNORE)
+                        break;
+
+                    _calibrationTimes.Add(position);
 
                     // [pessoal] Show how many taps were registered (upstream: "Detected")
                     _audioCalibrateText.color = Color.green;
@@ -196,14 +204,16 @@ namespace YARG.Menu.Calibrator
             var entries = new List<NavigationScheme.Entry>();
             if (canSave)
             {
+                // Saving globally is the recommended option (exact for the player who calibrated);
+                // the profile option is an adjustment relative to the global value, for multi-controller setups
+                entries.Add(new NavigationScheme.Entry(MenuAction.Green, "Menu.Calibrator.SaveGlobal",
+                    () => SaveGlobal()));
+
                 if (_player != null)
                 {
-                    entries.Add(new NavigationScheme.Entry(MenuAction.Green, "Menu.Calibrator.SaveProfile",
+                    entries.Add(new NavigationScheme.Entry(MenuAction.Yellow, "Menu.Calibrator.SaveProfile",
                         () => SaveToProfile()));
                 }
-
-                entries.Add(new NavigationScheme.Entry(MenuAction.Yellow, "Menu.Calibrator.SaveGlobal",
-                    () => SaveGlobal()));
             }
 
             entries.Add(new NavigationScheme.Entry(MenuAction.Blue, "Menu.Calibrator.Repeat", () => StartAudioMode()));
@@ -224,11 +234,19 @@ namespace YARG.Menu.Calibrator
             UpdateForState();
         }
 
-        // [pessoal] Same as the upstream calibrator
+        // [pessoal] Same global value as the upstream calibrator. The calibrating profile's input calibration is
+        // reset to 0 (the global value now fits this controller), otherwise its total would be the measurement plus
+        // its old adjustment. Other profiles keep their adjustments.
         private void SaveGlobal()
         {
             SettingsManager.Settings.AudioCalibration.Value = _resultAudioCalibration;
             SettingsManager.SaveSettings();
+
+            if (_player != null && _player.Profile.InputCalibrationMilliseconds != 0)
+            {
+                _player.Profile.InputCalibrationMilliseconds = 0;
+                PlayerContainer.SaveProfiles(false);
+            }
 
             SetInfoText(Localize.KeyFormat("Menu.Calibrator.SavedGlobal", _resultAudioCalibration),
                 Color.green, MEDIUM_TEXT_SCALE);
@@ -304,6 +322,14 @@ namespace YARG.Menu.Calibrator
             if (!CalibrationMath.TryCalculate(_calibrationTimes, SECONDS_PER_BEAT, out var result))
             {
                 SetInfoText(Localize.Key("Menu.Calibrator.NotEnoughData"), Color.red, MEDIUM_TEXT_SCALE);
+                return false;
+            }
+
+            // More taps discarded than used: two clusters (e.g. a delay near half a beat folds around) or
+            // erratic tapping; the median can't be trusted
+            if (!result.IsReliable)
+            {
+                SetInfoText(Localize.Key("Menu.Calibrator.Unreliable"), Color.red, MEDIUM_TEXT_SCALE);
                 return false;
             }
 

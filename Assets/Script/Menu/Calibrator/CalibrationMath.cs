@@ -18,6 +18,11 @@ namespace YARG.Menu.Calibrator
         /// </summary>
         public const double OUTLIER_FLOOR = 0.050;
 
+        /// <summary>
+        /// Largest delay accepted: beats are 0.75 s apart, so near 0.375 s an early and a late tap look alike.
+        /// </summary>
+        public const double MAX_DELAY = 0.300;
+
         public const double GOOD_SPREAD = 0.012;
         public const double FAIR_SPREAD = 0.025;
 
@@ -51,6 +56,14 @@ namespace YARG.Menu.Calibrator
                 Spread <= GOOD_SPREAD ? Consistency.Good
                 : Spread <= FAIR_SPREAD ? Consistency.Fair
                 : Consistency.Poor;
+
+            /// <summary>
+            /// False when the median can't be trusted: more than a quarter of the taps discarded (erratic tapping,
+            /// or two clusters because a delay near half a beat folds around the nearest-beat measurement), or a
+            /// delay so close to half a beat that early and late can't be told apart.
+            /// </summary>
+            public bool IsReliable =>
+                Discarded * 4 <= Used + Discarded && Math.Abs(Delay) <= MAX_DELAY;
         }
 
         /// <summary>
