@@ -34,6 +34,12 @@ O suporte a build para Windows (Mono) já vem com o editor para Windows; não é
        -buildTarget Win64 -buildWindows64Player "<saída>\YARG.exe" -logFile "<saída>\build.log"
      ```
 
+## Windows 11 com Smart App Control
+
+Testado em 2026-09-29 com o Unity **6000.6.3f1**: com o Smart App Control em modo de bloqueio, o editor **não compila scripts**. O Windows bloqueia DLLs .NET sem assinatura que vêm com o próprio Unity (`Data\Tools\BuildPipeline\Compilation\ApiUpdater\ApiUpdater.MovedFromExtractor.dll`, entre outras; eventos 3077 em *Microsoft-Windows-CodeIntegrity/Operational*, política `VerifiedAndReputableDesktop`), e o log termina em "Scripts have compiler errors" sem nenhum erro de C#. Com o 6000.3.5f2 ainda não foi testado. O executável gerado (`WindowsPlayer.exe` renomeado) também não tem assinatura.
+
+Sem desligar a proteção, dá para **verificar se o código compila** com o compilador C# do próprio Unity, que é assinado pela Microsoft: ver `tools/unity-compile-check` no repositório [yarg-autochart](https://github.com/codingfoxxx/yarg-autochart). Desligar o Smart App Control é irreversível (só volta reinstalando o Windows).
+
 ## Testes do YARG.Core
 
 ```
