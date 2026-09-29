@@ -25,13 +25,23 @@ Mudanças de gameplay sempre ficam atrás de uma configuração; o padrão é o 
 #### Jogar sem teclado conectado
 - **Correção de bug:** `GameManager.Update` e a busca da biblioteca de músicas usavam `Keyboard.current` sem checar nulo. Quando o Input System não tem nenhum teclado registrado (raro no Windows, mas possível em PC só com controle), `Keyboard.current` é nulo e a exceção a cada frame interrompia o resto do `Update` da partida, antes de o `SongRunner` avançar o relógio da música. Agora a checagem de Esc/Ctrl+Tab só acontece se houver teclado.
 - Arquivos: `Assets/Script/Gameplay/GameManager.cs`, `Assets/Script/Menu/MusicLibrary/SongSearchingField.cs`.
+- O mesmo para o mouse (`Mouse.current`), que é lido a cada frame da partida para esconder o cursor: `Gameplay/HUD/HideCursor.cs`, `Gameplay/HUD/Pause/PracticePause.cs`, `Gameplay/HUD/Practice/PracticeSectionMenu.cs`, `Menu/Main/MainMenuBackground.cs`.
+
+#### Calibração de entrada escalada pela velocidade da música
+- **Correção de bug:** a calibração de áudio e a de vídeo entram no relógio do jogo multiplicadas pela velocidade da música (`SongRunner`: `AudioCalibration * SongSpeed`), porque um atraso real de X ms vale X × velocidade no tempo da música. A calibração de entrada do perfil entrava sem esse fator (`BasePlayer`), então no modo prática fora de 100% quem tem calibração de entrada era julgado deslocado (a 50%, uma calibração de 100 ms compensava o dobro do devido). Agora é multiplicada pela velocidade nos dois lugares em que é aplicada. A 100%, nada muda. Replays guardam os tempos já ajustados, então não são afetados.
+- Arquivo: `Assets/Script/Gameplay/Player/BasePlayer.cs`.
 
 #### Calibração guiada (Configurações → Abrir calibrador)
 - **Instruções claras** (pt-BR e inglês) antes de começar: o que fazer, qual botão usar no controle (a palhetada, direcional para baixo, ou o A), usar o mesmo fone/caixa de sempre e seguir o som, não a tela. Upstream: duas linhas fixas em inglês.
 - **Duas passadas** da música de calibração (30 s, ~40 toques; upstream: 15 s, ~20 toques). Com erro humano de 15 ms, 95% dos resultados ficam a menos de 5,7 ms do atraso real, contra 8,4 ms com uma passada (400 jogadores simulados em `CalibrationMathTests`).
 - **Descarte de toques por toque**: cada toque é medido contra a batida mais próxima e só os fora da curva (mais de max(50 ms, 3 desvios robustos) da mediana) saem. O filtro do upstream comparava cada toque com o anterior, então uma batida perdida também descartava o toque bom seguinte.
 - **Resultado explicado**: atraso medido, consistência (±ms: boa/razoável/baixa), toques usados/descartados e os valores atuais. Contador de toques durante a medição.
-- **O jogador escolhe onde salvar**: *Salvar no perfil* (calibração de entrada do perfil que tocou, a que já existia no YARG sem ferramenta: guarda a diferença em relação à calibração de áudio atual, então a compensação total fica igual) ou *Salvar para todos* (calibração de áudio global, exatamente o que o calibrador do upstream fazia). *Repetir* e *Voltar* também disponíveis; os botões só aparecem 1 s depois do fim da música, para um toque atrasado não escolher uma opção sem querer. Upstream: gravava a calibração global direto.
+- **O jogador escolhe onde salvar**:
+  - *Salvar para todos* (A, recomendado): calibração de áudio global com o mesmo valor que o calibrador do upstream gravava. Também zera a calibração de entrada do perfil que calibrou; senão o total desse jogador seria a medida mais o ajuste antigo.
+  - *Salvar no perfil* (Y): calibração de entrada do perfil que tocou (já existia no YARG, só não tinha ferramenta), como ajuste em cima da calibração de áudio atual, para quem tem controles diferentes em perfis diferentes. O texto avisa que, se a calibração de áudio mudar depois, os perfis precisam ser calibrados de novo.
+  - *Repetir* e *Voltar* também disponíveis. Os botões só aparecem 1 s depois do fim da música, para um toque atrasado não escolher uma opção sem querer. Upstream: gravava a calibração global direto.
+- **Resultado não confiável é recusado**: mais de 25% dos toques descartados, ou atraso acima de 300 ms. Perto de meia batida (375 ms), um toque adiantado e um atrasado ficam iguais para a medição e a mediana pode errar 750 ms; upstream aceitava.
+- Toques no primeiro 0,3 s da segunda passada são ignorados (a recarga da música atrasa um pouco a primeira batida).
 - Correção: voltar e recomeçar não inscreve mais o handler de input duas vezes (cada toque contaria em dobro).
 - Textos longos usam fonte menor (a caixa de texto da cena é de uma linha, 64 pt, sem ajuste automático).
 - Arquivos: `Assets/Script/Menu/Calibrator/Calibrator.cs`, `CalibrationMath.cs` (novo, sem dependência do Unity), `Assets/StreamingAssets/lang/en-US.json` e `pt-BR.json` (chaves novas em `Menu.Calibrator`; os outros idiomas caem no inglês).
