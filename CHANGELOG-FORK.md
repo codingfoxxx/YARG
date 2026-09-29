@@ -36,5 +36,9 @@ Mudanças de gameplay sempre ficam atrás de uma configuração; o padrão é o 
 - Textos longos usam fonte menor (a caixa de texto da cena é de uma linha, 64 pt, sem ajuste automático).
 - Arquivos: `Assets/Script/Menu/Calibrator/Calibrator.cs`, `CalibrationMath.cs` (novo, sem dependência do Unity), `Assets/StreamingAssets/lang/en-US.json` e `pt-BR.json` (chaves novas em `Menu.Calibrator`; os outros idiomas caem no inglês).
 
+#### Opção "Escanear Tudo ao Iniciar" (Configurações → Músicas)
+- **Qualidade de vida, desligada por padrão** (padrão = comportamento do upstream). Ao abrir, o jogo só lê o cache de músicas (varredura rápida), então uma pasta nova (por exemplo, gerada pelo autochart) só aparece depois de *Escanear Músicas*. Ligada, a abertura faz a varredura completa e as músicas novas aparecem sozinhas; o custo é abrir mais devagar com bibliotecas grandes.
+- Arquivos: `Assets/Script/Settings/SettingsManager.Settings.cs` (`FullScanOnStartup`), `SettingsManager.cs` (aba Músicas), `Assets/Script/Persistent/LoadingScreen.cs`, textos em `en-US.json` e `pt-BR.json`.
+
 #### Verificação
 - Compilação: todo o código do jogo compilado com o Roslyn do Unity (`yarg-autochart/tools/unity-compile-check`), 0 erros e os mesmos 26 avisos do upstream. Ainda **sem** teste no jogo rodando (depende do Unity 6000.3.5f2 instalado e do Smart App Control; ver `PROGRESS.md` no repositório de ferramentas).
