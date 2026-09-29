@@ -22,7 +22,10 @@ namespace YARG.Menu.Main
                 new Vector3(0, 0.5f, 0), Time.deltaTime * 1.5f);
 
             // Get the mouse position
-            var mousePos = Mouse.current.position.ReadValue();
+            // [pessoal] Mouse.current is null when no mouse is present; keep the camera centered then
+            var mousePos = Mouse.current != null
+                ? Mouse.current.position.ReadValue()
+                : new Vector2(_camera.pixelWidth / 2f, _camera.pixelHeight / 2f);
             mousePos = _camera.ScreenToViewportPoint(mousePos);
 
             // Clamp

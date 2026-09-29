@@ -76,7 +76,8 @@ namespace YARG.Gameplay.HUD
                 return;
             }
 
-            var delta = Mouse.current.scroll.ReadValue().y * Time.unscaledDeltaTime;
+            // [pessoal] Mouse.current is null when no mouse is present
+            var delta = Mouse.current != null ? Mouse.current.scroll.ReadValue().y * Time.unscaledDeltaTime : 0f;
 
             if (delta > 0f)
             {
