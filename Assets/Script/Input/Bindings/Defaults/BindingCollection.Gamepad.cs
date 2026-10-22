@@ -1,4 +1,4 @@
-﻿using UnityEngine.InputSystem;
+using UnityEngine.InputSystem;
 using YARG.Core;
 using YARG.Core.Input;
 
@@ -90,13 +90,20 @@ namespace YARG.Input
             AddBinding(GuitarAction.YellowFret, gamepad.rightShoulder);
             AddBinding(GuitarAction.BlueFret, gamepad.rightTrigger, _gamepadTriggerFretSettings); // [pessoal]
             AddBinding(GuitarAction.OrangeFret, gamepad.buttonSouth);
+            AddBinding(GuitarAction.OrangeFret, gamepad.buttonEast);
 
+            AddBinding(GuitarAction.StrumUp, gamepad.rightStick.up);
+            AddBinding(GuitarAction.StrumDown, gamepad.rightStick.down);
             AddBinding(GuitarAction.StrumUp, gamepad.dpad.up);
             AddBinding(GuitarAction.StrumDown, gamepad.dpad.down);
+            AddBinding(GuitarAction.StrumUp, gamepad.leftStick.up);
+            AddBinding(GuitarAction.StrumDown, gamepad.leftStick.down);
 
             AddBinding(GuitarAction.StarPower, gamepad.selectButton);
+            AddBinding(GuitarAction.StarPower, gamepad.buttonNorth);
 
             AddBinding(GuitarAction.Whammy, gamepad.leftStick.x);
+            AddBinding(GuitarAction.Whammy, gamepad.rightStick.x);
 
             return true;
         }
