@@ -273,6 +273,25 @@ namespace YARG.Player
                 player.Bindings.OnDeviceAdded(device);
             }
 
+            if (device is Gamepad gamepad)
+            {
+                // Se houver jogador ativo com apenas teclado/sem controle físico, vincular o Gamepad diretamente!
+                var kbPlayer = _players.FirstOrDefault(p => p.Bindings.InputDevices.All(d => d is Keyboard));
+                if (kbPlayer != null && !IsDeviceTaken(gamepad))
+                {
+                    kbPlayer.Bindings.AddDevice(gamepad);
+                    if (!kbPlayer.Bindings.ContainsBindingsForDevice(gamepad))
+                    {
+                        kbPlayer.Bindings.SetDefaultBinds(gamepad, GamepadBindingMode.Gamepad);
+                    }
+                    kbPlayer.Profile.ApplyModifier(Modifier.AllTaps);
+                    SaveProfiles(true);
+                    BindingsContainer.SaveBindings();
+                    ToastManager.ToastSuccess($"Controle conectado: {device.displayName}");
+                    return;
+                }
+            }
+
             if (!SettingsManager.Settings.AutoCreateProfiles.Value)
             {
                 return;
@@ -904,6 +923,22 @@ namespace YARG.Player
             {
                 CreatePlayerFromProfile(profile, true);
             }
+
+            // [gamepad] Se houver Gamepad conectado e sem player associado, conectar ou criar perfil na hora
+            foreach (var device in InputSystem.devices)
+            {
+                if (device is Gamepad gamepad && !IsDeviceTaken(gamepad))
+                {
+                    if (GetProfileForDevice(gamepad) is { } existingProfile)
+                    {
+                        CreatePlayerFromProfile(existingProfile, true);
+                    }
+                    else if (SettingsManager.Settings.AutoCreateProfiles.Value)
+                    {
+                        CreateProfileFromDevice(gamepad);
+                    }
+                }
+            }
         }
 
         private static bool CreateProfileFromDevice(InputDevice device)
@@ -936,6 +971,11 @@ namespace YARG.Player
                 gameMode = GameMode.ProKeys;
                 profileName = "New Keys Profile";
             }
+            else if (device is Gamepad)
+            {
+                gameMode = GameMode.FiveFretGuitar;
+                profileName = "Controle";
+            }
             else
             {
                 // Filter out keyboard and mouse devices for the purposes of this message, otherwise we're just
@@ -959,6 +999,12 @@ namespace YARG.Player
                 GameMode = gameMode
             };
 
+            if (device is Gamepad)
+            {
+                // Taps ativados para tocar no controle sem obrigatoriedade de palhetar no D-Pad
+                newProfile.ApplyModifier(Modifier.AllTaps);
+            }
+
             AddProfile(newProfile);
 
             var player = CreatePlayerFromProfile(newProfile, false);
@@ -972,8 +1018,18 @@ namespace YARG.Player
 
             if (!player.Bindings.ContainsBindingsForDevice(device))
             {
-                player.Bindings.SetDefaultBinds(device);
+                if (device is Gamepad gamepad)
+                {
+                    player.Bindings.SetDefaultBinds(gamepad, GamepadBindingMode.Gamepad);
+                }
+                else
+                {
+                    player.Bindings.SetDefaultBinds(device);
+                }
             }
+
+            SaveProfiles(true);
+            BindingsContainer.SaveBindings();
 
             var successMessage = Localize.KeyFormat("Menu.Toast.ProfileCreated", device.displayName);
             ToastManager.ToastSuccess(successMessage);
