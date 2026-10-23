@@ -80,6 +80,8 @@ namespace YARG.Localization
             {
                 using var request = UnityWebRequest.Get(MESSAGES_URL);
                 request.SetRequestHeader("User-Agent", "YARG");
+                // Sem limite, uma conexão lenta prende a tela de carregamento (fork)
+                request.timeout = 2;
                 await request.SendWebRequest();
                 if (request.result == UnityWebRequest.Result.Success)
                 {

@@ -55,6 +55,11 @@ Mudanças de gameplay sempre ficam atrás de uma configuração; o padrão é o 
 - **Correção (2026-10-23):** a primeira versão chamava `YargProfile.ApplyModifier`, que não existe no YARG.Core, e o projeto não compilava; trocado por `AddSingleModifier` (que também remove os modificadores conflitantes).
 - Arquivo: `Assets/Script/Player/PlayerContainer.cs`.
 
+#### Tela de carregamento presa por conexão lenta
+- **Correção de bug (2026-10-23):** ao abrir, o jogo baixa as mensagens do YARG (`raw.githubusercontent.com`, `LocalizationManager.LoadUpdates`) sem limite de tempo, e a tela de carregamento espera essa requisição. Numa rede em que um dos IPs do GitHub demora a conectar (medido no Mac: 35-60 s nesse IP, 0,02 s nos outros), o jogo levava 75-80 s para abrir. Agora a requisição tem `timeout = 2`, como as verificações de versão de fontes e gêneros que já existiam; os downloads dos `.zip` de fontes e gêneros (só quando há atualização) ganharam 30 s.
+- Medição no Mac: antes, 80 s em 3 de 3 aberturas; depois, 4-5 s em 6 de 6.
+- Arquivos: `Assets/Script/Localization/LocalizationManager.cs`, `Assets/Script/Song/SongSources.cs`, `Assets/Script/Song/Genrelizer.cs`.
+
 #### Verificação
 - Compilação: todo o código do jogo compilado com o Roslyn do Unity (`yarg-autochart/tools/unity-compile-check`), 0 erros e os mesmos 26 avisos do upstream.
 - Build real no Windows (2026-09-29, `YARG.exe`) e no macOS (2026-10-23, `YARG.app` universal, Unity 6000.3.5f2 em modo batch, ~7 min com o projeto novo): o jogo abre em pt-BR e acha a biblioteca de músicas. Gameplay com controle ainda sem playtest.

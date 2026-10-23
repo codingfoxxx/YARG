@@ -390,6 +390,7 @@ namespace YARG.Song
                 {
                     request.SetRequestHeader("User-Agent", "YARG");
                     request.downloadHandler = new DownloadHandlerFile(zipPath);
+                    request.timeout = 30;
                     await request.SendWebRequest();
                     if (request.result != UnityWebRequest.Result.Success)
                     {

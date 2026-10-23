@@ -233,6 +233,7 @@ namespace YARG.Song
                 string zipPath = Path.Combine(SourcesFolder, "update.zip");
                 using (var request = UnityWebRequest.Get(SOURCE_ZIP_URL))
                 {
+                    request.timeout = 30;
                     await request.SendWebRequest();
                     if (request.result == UnityWebRequest.Result.Success)
                     {
