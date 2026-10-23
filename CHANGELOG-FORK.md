@@ -50,5 +50,11 @@ Mudanças de gameplay sempre ficam atrás de uma configuração; o padrão é o 
 - **Qualidade de vida, desligada por padrão** (padrão = comportamento do upstream). Ao abrir, o jogo só lê o cache de músicas (varredura rápida), então uma pasta nova (por exemplo, gerada pelo autochart) só aparece depois de *Escanear Músicas*. Ligada, a abertura faz a varredura completa e as músicas novas aparecem sozinhas; o custo é abrir mais devagar com bibliotecas grandes.
 - Arquivos: `Assets/Script/Settings/SettingsManager.Settings.cs` (`FullScanOnStartup`), `SettingsManager.cs` (aba Músicas), `Assets/Script/Persistent/LoadingScreen.cs`, textos em `en-US.json` e `pt-BR.json`.
 
+#### Controle conecta sozinho e toca sem palhetar
+- **O que muda:** ao plugar um controle (`Gamepad`), ele é vinculado ao jogador que só tem teclado ou, com *Criar Perfis Automaticamente* ligado, ganha um perfil "Controle" de 5 trastes com o mapeamento de gamepad e o modificador **AllTaps** (acerta só apertando o botão no tempo). Controles já conectados também são procurados ao carregar os perfis. Upstream: gamepad não cria perfil, e sem palhetar as notas viram Miss.
+- **Correção (2026-10-23):** a primeira versão chamava `YargProfile.ApplyModifier`, que não existe no YARG.Core, e o projeto não compilava; trocado por `AddSingleModifier` (que também remove os modificadores conflitantes).
+- Arquivo: `Assets/Script/Player/PlayerContainer.cs`.
+
 #### Verificação
-- Compilação: todo o código do jogo compilado com o Roslyn do Unity (`yarg-autochart/tools/unity-compile-check`), 0 erros e os mesmos 26 avisos do upstream. Ainda **sem** teste no jogo rodando (depende do Unity 6000.3.5f2 instalado e do Smart App Control; ver `PROGRESS.md` no repositório de ferramentas).
+- Compilação: todo o código do jogo compilado com o Roslyn do Unity (`yarg-autochart/tools/unity-compile-check`), 0 erros e os mesmos 26 avisos do upstream.
+- Build real no Windows (2026-09-29, `YARG.exe`) e no macOS (2026-10-23, `YARG.app` universal, Unity 6000.3.5f2 em modo batch, ~7 min com o projeto novo): o jogo abre em pt-BR e acha a biblioteca de músicas. Gameplay com controle ainda sem playtest.

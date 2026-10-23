@@ -284,7 +284,7 @@ namespace YARG.Player
                     {
                         kbPlayer.Bindings.SetDefaultBinds(gamepad, GamepadBindingMode.Gamepad);
                     }
-                    kbPlayer.Profile.ApplyModifier(Modifier.AllTaps);
+                    kbPlayer.Profile.AddSingleModifier(Modifier.AllTaps);
                     SaveProfiles(true);
                     BindingsContainer.SaveBindings();
                     ToastManager.ToastSuccess($"Controle conectado: {device.displayName}");
@@ -1002,7 +1002,7 @@ namespace YARG.Player
             if (device is Gamepad)
             {
                 // Taps ativados para tocar no controle sem obrigatoriedade de palhetar no D-Pad
-                newProfile.ApplyModifier(Modifier.AllTaps);
+                newProfile.AddSingleModifier(Modifier.AllTaps);
             }
 
             AddProfile(newProfile);
