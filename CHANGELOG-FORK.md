@@ -53,7 +53,8 @@ Mudanças de gameplay sempre ficam atrás de uma configuração; o padrão é o 
 #### Controle conecta sozinho e toca sem palhetar
 - **O que muda:** ao plugar um controle (`Gamepad`), ele é vinculado ao jogador que só tem teclado ou, com *Criar Perfis Automaticamente* ligado, ganha um perfil "Controle" de 5 trastes com o mapeamento de gamepad e o modificador **AllTaps** (acerta só apertando o botão no tempo). Controles já conectados também são procurados ao carregar os perfis. Upstream: gamepad não cria perfil, e sem palhetar as notas viram Miss.
 - **Correção (2026-10-23):** a primeira versão chamava `YargProfile.ApplyModifier`, que não existe no YARG.Core, e o projeto não compilava; trocado por `AddSingleModifier` (que também remove os modificadores conflitantes).
-- Arquivo: `Assets/Script/Player/PlayerContainer.cs`.
+- **Também pelo menu (2026-10-23):** adicionar um controle a um perfil de 5 trastes em *Perfis → Adicionar Dispositivo* liga o AllTaps no perfil. Antes só os caminhos automáticos ligavam; um perfil montado à mão ficava sem, e as notas viravam Miss (teste na engine com "The Breaking Wheel", Hard, só trastes: 0/1171 sem AllTaps, 1171/1171 com; `yarg-autochart/tests/EngineTests/AllTapsTests.cs`).
+- Arquivos: `Assets/Script/Player/PlayerContainer.cs`, `Assets/Script/Menu/ProfileList/ProfileView.cs`.
 
 #### Tela de carregamento presa por conexão lenta
 - **Correção de bug (2026-10-23):** ao abrir, o jogo baixa as mensagens do YARG (`raw.githubusercontent.com`, `LocalizationManager.LoadUpdates`) sem limite de tempo, e a tela de carregamento espera essa requisição. Numa rede em que um dos IPs do GitHub demora a conectar (medido no Mac: 35-60 s nesse IP, 0,02 s nos outros), o jogo levava 75-80 s para abrir. Agora a requisição tem `timeout = 2`, como as verificações de versão de fontes e gêneros que já existiam; os downloads dos `.zip` de fontes e gêneros (só quando há atualização) ganharam 30 s.

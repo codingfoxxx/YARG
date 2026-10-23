@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XInput;
 using UnityEngine.UI;
+using YARG.Core;
 using YARG.Core.Audio;
 using YARG.Core.Game;
 using YARG.Core.Logging;
@@ -276,6 +277,14 @@ namespace YARG.Menu.ProfileList
                         {
                             player.Bindings.SetDefaultBinds(device);
                         }
+                    }
+
+                    // Controle num perfil de 5 trastes: tocar sem palhetar, como nos perfis criados sozinhos (fork)
+                    if (device is Gamepad && Profile.GameMode == GameMode.FiveFretGuitar
+                        && !Profile.IsModifierActive(Modifier.AllTaps))
+                    {
+                        Profile.AddSingleModifier(Modifier.AllTaps);
+                        PlayerContainer.SaveProfiles();
                     }
 
                     selectedDevice = true;
